@@ -39,3 +39,5 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+.zenstack_repl_history

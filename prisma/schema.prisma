@@ -12,16 +12,66 @@ generator client {
     provider = "prisma-client-js"
 }
 
-/// @@allow('all', auth() == author)
+/// @@allow('read', true)
+/// @@allow('delete', auth() == creator)
+/// @@delegate(type)
+model Vehicle {
+    id String @id() @default(cuid())
+    model String
+    year Int
+    type String
+    creator User @relation(fields: [createdBy], references: [id])
+    createdBy String
+    delegate_aux_car Car?
+    delegate_aux_motorcycle Motorcycle?
+}
+
+/// @@allow('read', true)
+/// @@allow('delete', auth() == creator)
+model Car {
+    id String @id()
+    isConvertible Boolean
+    delegate_aux_vehicle Vehicle @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+/// @@allow('read', true)
+/// @@allow('delete', auth() == creator)
+model Motorcycle {
+    id String @id()
+    hasHeatedGrips Boolean
+    delegate_aux_vehicle Vehicle @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+/// @@delegate(contentType)
+/// @@allow('all', auth() == owner)
 /// @@allow('read', auth() != null && published)
-model Post {
+model Content {
     id String @id() @default(cuid())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt()
-    title String
     published Boolean @default(false)
-    author User @relation(fields: [authorId], references: [id])
-    authorId String
+    owner User? @relation(fields: [createdBy], references: [id])
+    createdBy String?
+    contentType String
+    delegate_aux_post Post?
+    delegate_aux_video Video?
+}
+
+/// @@allow('all', auth() == owner)
+/// @@allow('read', auth() != null && published)
+model Post {
+    id String @id()
+    title String
+    delegate_aux_content Content @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+/// @@allow('all', auth() == owner)
+/// @@allow('read', auth() != null && published)
+model Video {
+    id String @id()
+    name String
+    duration Int
+    delegate_aux_content Content @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Account {
@@ -60,8 +110,9 @@ model User {
     /// @password
     /// @omit
     password String
-    posts Post[]
     image String?
+    vehicles Vehicle[]
+    contents Content[]
     accounts Account[]
     sessions Session[]
 }
